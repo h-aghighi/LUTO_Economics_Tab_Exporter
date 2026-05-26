@@ -1,87 +1,89 @@
 #!/usr/bin/env python3
 """
-luto_economics_tab_state_exporter.py
+LUTO2 Economics Tab State Exporter
+==================================
 
-Purpose
--------
-Create clean Excel outputs for the LUTO2 Economics tab at the same level of
-detail as the dashboard-style overview spreadsheets.
+This script exports LUTO2 Economics tab data from dashboard JavaScript source
+files into clean, state-organised Excel workbooks.
 
-This is NOT the raw all-data extractor.
+The exporter is designed for reporting and review workflows where users need
+structured Excel outputs that match the values displayed directly in LUTO2. It
+supports both single-run and batch-run processing and handles current LUTO2
+region structures, including nested `region_NRM` and `region_state` data.
 
-It extracts only the dashboard-level Economics overview files:
+Key Features
+------------
+- Reads LUTO2 Economics dashboard source files from each run's
+  `DATA_REPORT/data` folder.
+- Creates one Excel workbook per state and one worksheet per region.
+- Uses `region_NRM` values for regional worksheets.
+- Uses direct `region_state` values for state-total worksheets where available,
+  ensuring state-level values match the LUTO2 dashboard.
+- Supports single-region states such as ACT and Northern Territory without
+  creating unnecessary duplicate state sheets.
+- Exports the main Economics tab groups:
+    * Sum
+    * Ag
+    * Ag Mgt
+    * Non-Ag
+- Adds profitability tables for each group:
+    * Sum - Profitability
+    * Ag - Profitability
+    * Ag Mgt - Profitability
+    * Non-Ag - Profitability
+- Adds the template-required Ag Mgt renewable revenue/cost breakdown for:
+    * Onshore Wind
+    * Utility Solar PV
+- Preserves blank cells where source values are genuinely missing, rather than
+  forcing missing values to zero.
+- Writes a manifest CSV listing all generated Excel workbooks.
+
+Primary Source Files
+--------------------
+The exporter uses the following LUTO2 dashboard JavaScript files where available:
 
     Economics_overview_sum.js
     Economics_overview_Ag.js
     Economics_overview_Am.js
     Economics_overview_Non_Ag.js
+    Economics_Sum.js
+    Economics_Am_revenue.js
+    Economics_Am_cost.js
 
-Output organisation
--------------------
-outputs/
-  Queensland/
-    Run_G0001_Queensland_Economics_Tab_Overview.xlsx
-  Tasmania/
-    Run_G0001_Tasmania_Economics_Tab_Overview.xlsx
-  ...
+The script intentionally does not blindly sum all detailed JS series because
+some source files contain overlapping totals and subtotals. Instead, it extracts
+the specific overview and template-level fields required for the reporting
+workbook.
 
-Each workbook contains:
-  - one sheet per region in that state
-  - one final state-total sheet when the state has more than one region
-  - no duplicate state-total sheet for single-region states such as ACT
+Typical Usage
+-------------
+Single run:
 
-Each sheet contains four clean sections:
-  1. Sum
-  2. Ag
-  3. Ag Mgt
-  4. Non-Ag
+    python luto_economics_tab_state_exporter.py ^
+      --data-dir "C:\path\to\Run_G0001\DATA_REPORT\data" ^
+      --output-dir "C:\path\to\outputs" ^
+      --output-prefix Run_G0001 ^
+      --region-level auto ^
+      --start-year 2020 ^
+      --end-year 2050
 
-After each section, the script writes a derived profitability table:
-  - Sum - Profitability
-  - Ag - Profitability
-  - Ag Mgt - Profitability
-  - Non-Ag - Profitability
+Batch mode:
 
-Profitability uses dashboard Sum overview components for revenue/cost and direct group-level profit from Economics_Sum.js where available.
-
-Each section is a wide table:
-    Category(year) | series 1 | series 2 | ... | series n
-
-Fixes in v4
-------------
-- Maps "Co-operative Management Area" to Queensland.
-- Avoids duplicate/suffixed sheet names for single-region states such as Northern Territory.
-
-Fixes in v5
-------------
-- Preserves blanks where all source components are missing.
-- Avoids converting missing profitability/state-total values into zeros.
-
-Fixes in v6
-------------
-- Always writes the four profitability blocks, even if a group has no data for a region.
-- Removes the repeated pandas FutureWarning from the run log.
-
-Region-level detection
-----------------------
-The exporter supports both flat JS files and nested JS files with keys such as:
-    region_NRM
-    region_state
-
-By default, --region-level auto is used. It prefers region_NRM when available.
-
-Batch-run convention
---------------------
-By default, batch mode processes folders whose names start with:
-
-    Run_
-
-This is intentional and keeps the source/shared code aligned with standard
-LUTO run-folder naming.
+    python luto_economics_tab_state_exporter.py ^
+      --reports-base-dir "C:\path\to\folder\containing\Run_*" ^
+      --output-dir "C:\path\to\outputs" ^
+      --region-level auto ^
+      --start-year 2020 ^
+      --end-year 2050
 
 Requirements
 ------------
-python -m pip install pandas openpyxl
+    pandas
+    openpyxl
+
+Install requirements with:
+
+    python -m pip install pandas openpyxl
 """
 
 from __future__ import annotations
@@ -121,9 +123,9 @@ GROUP_PROFIT_COLUMN = {
     "Non-Ag": "Non-Agricultural Land-use",
 }
 
-# Alexis template request:
-# keep the Ag Mgt overview/net columns, but also show renewable revenue/cost
-# breakdown columns for the renewable Ag Mgt items.
+# Template-specific Ag Mgt breakdown:
+# keep the Ag Mgt overview/net columns and append renewable revenue/cost
+# breakdown columns for the renewable Ag Mgt technologies.
 AG_MGT_BREAKDOWN_TECHS = ["Onshore Wind", "Utility Solar PV"]
 AG_MGT_DETAIL_COLUMNS = [
     ("Revenue", "Onshore Wind"),
@@ -1523,7 +1525,7 @@ def process_one_run(
 
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Create clean state-folder / region-sheet outputs for LUTO2 Economics tab data following the Alexis template, with Sum/Ag/Ag Mgt/Non-Ag and profitability blocks."
+        description="Export LUTO2 Economics tab data into state-organised Excel workbooks with Sum, Ag, Ag Mgt, Non-Ag, profitability, and template-level revenue/cost breakdowns."
     )
 
     input_group = parser.add_mutually_exclusive_group(required=True)
