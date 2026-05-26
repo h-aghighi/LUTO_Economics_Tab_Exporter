@@ -1,0 +1,19 @@
+On my System:
+
+cd C:\LUTO_Economics_Tab_Exporter
+
+python ".\luto_economics_tab_state_exporter.py" --data-dir "C:\LUTO_Economics_Tab_Exporter\Run_G0001\DATA_REPORT\data" --output-dir "C:\LUTO_Economics_Tab_Exporter\outputs" --output-prefix Run_G0001 --region-level auto --start-year 2020 --end-year 2050
+
+
+
+You should open PowerShell, then run
+cd C:\LUTO_Economics_Tab_Exporter
+
+python ".\luto_economics_tab_state_exporter.py" --reports-base-dir "S:\VC-DVCResearch\CWA\Projects\Current\Net Zero Industrial Precincts\5 Energy Land Use 25-26\LUTO2 runs\RES5 22 May" --output-dir "C:\LUTO_Economics_Tab_Exporter\outputs" --region-level auto --start-year 2020 --end-year 2050
+
+
+If python does not work, use:
+cd C:\LUTO_Economics_Tab_Exporter
+
+py ".\luto_economics_tab_state_exporter.py" --reports-base-dir "S:\VC-DVCResearch\CWA\Projects\Current\Net Zero Industrial Precincts\5 Energy Land Use 25-26\LUTO2 runs\RES5 22 May" --output-dir "C:\LUTO_Economics_Tab_Exporter\outputs" --region-level auto --start-year 2020 --end-year 2050
+
